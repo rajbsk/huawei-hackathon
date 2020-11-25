@@ -9,7 +9,7 @@ def normalize_sequence(sequence):
 	return norm
 
 # split a univariate sequence into samples
-def split_sequence(sequence, n_steps):
+def split_sequence_regression(sequence, n_steps):
 	X, y = list(), list()
 	pretime_list = [0.0 for i in range(n_steps)]
 	data = []
@@ -28,7 +28,45 @@ def split_sequence(sequence, n_steps):
 		data.append([seq_x, seq_y])
 	return data
 
-def read_folder_files(folder_name, steps):
+def split_sequence_prediction(sequence, labels, n_steps):
+	X, y = list(), list()
+	pretime_list = [0.0 for i in range(n_steps)]
+	data = []
+	for i in range(len(sequence)):
+		# find the start of this pattern
+		start_ix = i - n_steps + 1
+		# find the end of this pattern
+		end_ix = i + 1
+		
+		pre_list = []
+		if start_ix<0:
+			pre_list = pretime_list[:abs(start_ix)]
+		
+		# gather input and output parts of the pattern
+		seq_x, seq_y = pre_list+sequence[max(0, start_ix):end_ix], labels[i]
+		data.append([seq_x, seq_y])
+	return data
+
+def split_sequence_prediction_test(sequence, n_steps):
+	X, y = list(), list()
+	pretime_list = [0.0 for i in range(n_steps)]
+	data = []
+	for i in range(len(sequence)):
+		# find the start of this pattern
+		start_ix = i - n_steps + 1
+		# find the end of this pattern
+		end_ix = i + 1
+		
+		pre_list = []
+		if start_ix<0:
+			pre_list = pretime_list[:abs(start_ix)]
+		
+		# gather input and output parts of the pattern
+		seq_x = pre_list+sequence[max(0, start_ix):end_ix]
+		data.append([seq_x])
+	return data
+
+def read_folder_files_regression(folder_name, steps):
 	files = os.listdir(folder_name)
 	data = []
 	for file in files:
@@ -36,5 +74,17 @@ def read_folder_files(folder_name, steps):
 			dataframe = pd.read_csv(folder_name+file)
 			kpi_values = dataframe.iloc[:, 1].tolist()
 			normalized_kpi_values = normalize_sequence(kpi_values)
-			data += split_sequence(normalized_kpi_values, steps)
+			data += split_sequence_regression(normalized_kpi_values, steps)
+	return data
+
+def read_folder_files_prediction(folder_name, steps):
+	files = os.listdir(folder_name)
+	data = []
+	for file in files:
+		if "csv" in file:
+			dataframe = pd.read_csv(folder_name+file)
+			kpi_values = dataframe.iloc[:, 1].tolist()
+			labels = dataframe.iloc[:, 2].tolist()
+			normalized_kpi_values = normalize_sequence(kpi_values)
+			data += split_sequence_prediction(normalized_kpi_values, labels, steps)
 	return data
