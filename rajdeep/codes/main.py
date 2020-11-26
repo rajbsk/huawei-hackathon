@@ -94,7 +94,7 @@ def main():
         kpi = df.iloc[:, 1].tolist()
         model_features = torch.FloatTensor(split_sequence_prediction_test(kpi, 10)).permute(0, 2, 1).to(device)
         prediction_probabilities = model_pred(model_features).squeeze(1).detach().cpu().numpy()
-        prediction = np.around(prediction_probabilities)
+        prediction = (np.around(prediction_probabilities)).astype(int)
         df["anomaly_label"] = prediction
         df.to_csv("../data/dataset_"+str(i)+".csv", index = False, header = True)
 
