@@ -6,6 +6,8 @@ from torchvision import transforms
 from tensorboardX import SummaryWriter
 from torch.nn import Linear, Conv1d, Flatten, MaxPool1d
 from torch.nn.functional import relu, sigmoid
+from torch.nn import MSELoss, L1Loss
+from torch.optim import Adam, lr_scheduler
 from tqdm import tqdm
 
 from logger import Logger
@@ -48,7 +50,8 @@ class DeepAnt(nn.Module):
         self.output_layer = Linear(in_features=self.num_filters_2*self.lout_conv2, out_features=self.output_layer_size)
     
         self.optimizer = torch.optim.Adam( filter(lambda p: p.requires_grad, self.parameters()), self.lr)
-        self.Criterion = nn.MSELoss()
+        # self.scheduler = lr_scheduler.
+        self.Criterion = nn.L1Loss()
 
     def get_batch_data(self, batch):
         kpi_history = batch[0]
@@ -91,6 +94,7 @@ class DeepAnt(nn.Module):
         for batch in dataLoader:
             batch_loss = self.process_batch(batch, train=False)
             total_loss += batch_loss
+        print("Evaluation Loss: %f"%(total_loss))
         return total_loss
 
     def train_model(self, trainDataLoader, devDataLoader):
@@ -106,7 +110,7 @@ class DeepAnt(nn.Module):
                 batch_loss = self.process_batch(batch, train=True)
                 train_loss += batch_loss
             dev_loss = self.evaluate_model(devDataLoader)
-            print("Iteration: %f,Train Loss = %f", (epoch, train_loss))
+            print("Iteration: %d,Train Loss = %f" %(epoch, train_loss))
             
             # Logging parameters
             p = list(self.named_parameters())
@@ -118,7 +122,7 @@ class DeepAnt(nn.Module):
                 if value.grad != None:
                     logger.histo_summary(tag+'/grad', value.grad.data.cpu().numpy(), ins+1)
             ins+=1
-            if epoch%10==0:
+            if (epoch+1)%self.save_every==0:
                 torch.save(self.state_dict(), self.model_directory+self.model_name+"_"+str(epoch))
     
     

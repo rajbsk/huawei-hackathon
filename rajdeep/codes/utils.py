@@ -1,11 +1,14 @@
 import numpy as np
 import pandas as pd
 import os
+from scipy import stats
 
 def normalize_sequence(sequence):
 	sequence_max = max(sequence)
 	sequence_min = min(sequence)
 	norm = [(float(i)-sequence_min)/(sequence_max-sequence_min) for i in sequence]
+	# stan = stats.zscore(sequence)
+	# return stan.tolist()
 	return norm
 
 # split a univariate sequence into samples
@@ -84,7 +87,7 @@ def read_folder_files_prediction(folder_name, steps):
 		if "csv" in file:
 			dataframe = pd.read_csv(folder_name+file)
 			kpi_values = dataframe.iloc[:, 1].tolist()
-			labels = dataframe.iloc[:, 2].tolist()
+			labels = dataframe["anomaly_label"].tolist()
 			normalized_kpi_values = normalize_sequence(kpi_values)
 			data += split_sequence_prediction(normalized_kpi_values, labels, steps)
 	return data
