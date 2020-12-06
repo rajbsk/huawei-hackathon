@@ -27,7 +27,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def main():
 
-    opt_dataset = {"n_steps":200, "training_data_folder" : "../data/data_v2/training/", 
+    opt_dataset = {"n_steps":35, "training_data_folder" : "../data/data_v2/training/", 
     "dev_data_folder" : "../data/data_v2/", "data_folder":"../data/data_v2/training/"}
 
     # Regression
@@ -41,7 +41,7 @@ def main():
 
     huawei_train_dataset, huawei_dev_dataset, huawei_test_dataset = torch.utils.data.random_split(huawei_dataset, [train_size, dev_size, test_size])
 
-    opt_model = {"device": device, "kernel_size": 50, "num_filters_1": 32, "num_filters_2": 32, "length": opt_dataset["n_steps"],
+    opt_model = {"device": device, "kernel_size": 3, "num_filters_1": 32, "num_filters_2": 32, "length": opt_dataset["n_steps"],
     "output_layer_size": 1, "conv_stride": 1, "pool_size_1": 2, "pool_size_2": 2, "pool_strides_1": 2,
     "pool_strides_2": 2, "model_directory": "../models/", "model_name": "DeepANT", "batch_size": 64, "epochs": 30, "lr": 0.0001,
     "save_every": 5}
@@ -54,7 +54,7 @@ def main():
     model_reg.cuda(device)
     # model_reg.evaluate_model(HuaweiDatasetLoaderDev)
     # model_reg.train_model(HuaweiDatasetLoaderTrain, HuaweiDatasetLoaderDev)
-    model_reg.load_state_dict(torch.load(opt_model["model_directory"] + "DeepANT_25"))
+    model_reg.load_state_dict(torch.load(opt_model["model_directory"] + "DeepANT_10"))
 
     # # Final prediction
     # # read datafile and predict
@@ -65,34 +65,34 @@ def main():
     actual = []
     predicted = []
     print(os.listdir("../data/data_v2/"))
-    # for i in file_indices:
-    #     df = pd.read_csv("../data/data_v2/dataset_"+str(i)+".csv")
-    #     kpi = df.iloc[:, 1].tolist()
-    #     normalized_kpi = normalize_sequence(kpi)
-    #     model_features = torch.FloatTensor(split_sequence_prediction_test(normalized_kpi, opt_dataset["n_steps"])).permute(0, 2, 1).to(device)
-    #     model_features = model_features.permute(0, 2, 1)
-    #     # prediction_probabilities = model_pred(model_features).squeeze(1).detach().cpu().numpy()
-    #     prediction_values = model_reg(model_features).squeeze(1).detach().cpu().numpy()
-    #     prediction_difference = np.abs(prediction_values-np.array(normalized_kpi))
+    for i in file_indices:
+        df = pd.read_csv("../data/data_v2/dataset_"+str(i)+".csv")
+        kpi = df.iloc[:, 1].tolist()
+        normalized_kpi = normalize_sequence(kpi)
+        model_features = torch.FloatTensor(split_sequence_prediction_test(normalized_kpi, opt_dataset["n_steps"])).permute(0, 2, 1).to(device)
+        model_features = model_features.permute(0, 2, 1)
+        # prediction_probabilities = model_pred(model_features).squeeze(1).detach().cpu().numpy()
+        prediction_values = model_reg(model_features).squeeze(1).detach().cpu().numpy()
+        prediction_difference = np.abs(prediction_values-np.array(normalized_kpi))
         
-    #     prediction_values = np.where(prediction_difference<=0.02, prediction_difference, 1)
-    #     prediction_values = np.where(prediction_values>0.02, prediction_values, 0)
+        prediction_values = np.where(prediction_difference<=0.02, prediction_difference, 1)
+        prediction_values = np.where(prediction_values>0.02, prediction_values, 0)
 
-    #     prediction_values = prediction_values.tolist()
-    #     df["anomaly_label"] = prediction_values
-    #     actual_values = df["anomaly_label"].tolist()
+        prediction_values = prediction_values.tolist()
+        df["anomaly_label"] = prediction_values
+        actual_values = df["anomaly_label"].tolist()
 
-    #     prediction_values = [int(i) for i in prediction_values]
-    #     actual_values = [int(i) for i in actual_values]
-    #     df["anomaly_label"] = prediction_values
+        prediction_values = [int(i) for i in prediction_values]
+        actual_values = [int(i) for i in actual_values]
+        df["anomaly_label"] = prediction_values
 
-    #     df.to_csv("../data/data_v2/dataset_"+str(i)+".csv", index = False, header = True)
+        df.to_csv("../data/data_v2/dataset_"+str(i)+".csv", index = False, header = True)
 
-    #     actual += actual_values
-    #     predicted += prediction_values
+        actual += actual_values
+        predicted += prediction_values
 
-    #     # df["anomaly_label"] = prediction
-    #     # df.to_csv("../data/dataset_"+str(i)+".csv", index = False, header = True)
+        # df["anomaly_label"] = prediction
+        # df.to_csv("../data/dataset_"+str(i)+".csv", index = False, header = True)
 
     # Prediction
     huawei_dataset = HuaweiPredictionDataset(opt_dataset)
@@ -103,25 +103,26 @@ def main():
 
     huawei_train_dataset, huawei_dev_dataset = torch.utils.data.random_split(huawei_dataset, [train_size, dev_size])
 
-    opt_model = {"device": device, "kernel_size": 50, "num_filters_1": 32, "num_filters_2": 32, "length": opt_dataset["n_steps"],
-    "output_layer_size": 1, "conv_stride": 1, "pool_size_1": 2, "pool_size_2": 2, "pool_strides_1": 2,
-    "pool_strides_2": 2, "model_directory": "../models/", "model_name": "DeepANT", "batch_size": 8, "epochs": 30, "lr": 0.0001,
+    opt_model = {"device": device, "kernel_size": 3, "num_filters_1": 32, "num_filters_2": 32, "length": opt_dataset["n_steps"],
+    "output_layer_size": 2, "conv_stride": 1, "pool_size_1": 2, "pool_size_2": 2, "pool_strides_1": 2,
+    "pool_strides_2": 2, "model_directory": "../models/", "model_name": "DeepANT_pred", "batch_size": 128, "epochs": 15, "lr": 0.001,
     "save_every": 5}
 
     HuaweiDatasetLoaderTrain = DataLoader(huawei_train_dataset, batch_size=opt_model["batch_size"], shuffle=True, num_workers=0)
     HuaweiDatasetLoaderDev = DataLoader(huawei_dev_dataset, batch_size=opt_model["batch_size"], shuffle=True, num_workers=0)
 
-    model_reg = DeepAnt(opt_model)
-    model_reg.cuda(device)
-    # model_reg.evaluate_model(HuaweiDatasetLoaderDev)
-    # model_reg.train_model(HuaweiDatasetLoaderTrain, HuaweiDatasetLoaderDev)
-    model_reg.load_state_dict(torch.load(opt_model["model_directory"] + "DeepANT_25"))
-
     model_pred = DeepAntPred(opt_model)
     model_pred.cuda(device)
-    model_pred.load_state_dict(model_reg.state_dict())
-    # model_pred.train_model(HuaweiDatasetLoaderTrain, HuaweiDatasetLoaderDev)
-    model_pred.load_state_dict(torch.load(opt_model["model_directory"] + "DeepANT_25"))
+
+    for parameter, value in model_reg.state_dict().items():
+        try:
+            model_pred.state_dict()[parameter] = value
+        except:
+            pass
+    
+    
+    model_pred.train_model(HuaweiDatasetLoaderTrain, HuaweiDatasetLoaderDev)
+    # model_pred.load_state_dict(torch.load(opt_model["model_directory"] + "DeepANT_10"))
 
     for i in file_indices:
         df = pd.read_csv("../data/data_v2/dataset_"+str(i)+".csv")
@@ -132,8 +133,7 @@ def main():
         # prediction_probabilities = model_pred(model_features).squeeze(1).detach().cpu().numpy()
         prediction_values = model_pred(model_features).squeeze(1).detach().cpu().numpy()
         
-        prediction_values = np.where(prediction_values<=0.5, prediction_values, 1)
-        prediction_values = np.where(prediction_values>0.5, prediction_values, 0)
+        prediction_values = np.argmax(prediction_values, axis=1)
 
         prediction_values = prediction_values.tolist()
         df["anomaly_label"] = prediction_values

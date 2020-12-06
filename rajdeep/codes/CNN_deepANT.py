@@ -43,7 +43,7 @@ class DeepAnt(nn.Module):
         self.conv_layer_1 = Conv1d(in_channels=1, out_channels=self.num_filters_1, kernel_size=self.kernel_size, stride=self.conv_stride)
         self.pool_layer_1 = MaxPool1d(kernel_size=self.pool_size_1, stride=self.pool_strides_1)
         self.lout_conv1 = int((self.length + 2*0- 1*(self.kernel_size-1)-1+self.conv_stride)/self.conv_stride)
-        self.conv_layer_2 = Conv1d(in_channels=self.num_filters_2, out_channels=self.num_filters_2, kernel_size=self.kernel_size, stride=self.conv_stride)
+        self.conv_layer_2 = Conv1d(in_channels=self.num_filters_1, out_channels=self.num_filters_2, kernel_size=self.kernel_size, stride=self.conv_stride)
         self.pool_layer_2 = MaxPool1d(kernel_size=self.pool_size_2, stride=self.pool_strides_2)
         self.lout_conv2 = int((self.lout_conv1 + 2*0- 1*(self.kernel_size-1)-1+self.conv_stride)/self.conv_stride)
         self.flatten_layer = Flatten()
@@ -123,7 +123,7 @@ class DeepAnt(nn.Module):
                     logger.histo_summary(tag+'/grad', value.grad.data.cpu().numpy(), ins+1)
             ins+=1
             if (epoch+1)%self.save_every==0:
-                torch.save(self.state_dict(), self.model_directory+self.model_name+"_"+str(epoch))
+                torch.save(self.state_dict(), self.model_directory+self.model_name+"_"+str(epoch+1))
     
     
         

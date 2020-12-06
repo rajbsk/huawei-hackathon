@@ -4,7 +4,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from tensorboardX import SummaryWriter
-from torch.nn import Linear, Conv1d, Flatten, MaxPool1d
+from torch.nn import Linear, Conv1d, Flatten, MaxPool1d, ConvTranspose1d
 from torch.nn.functional import relu, sigmoid, softmax
 from torch.nn import MSELoss, L1Loss
 from torch.optim import Adam, lr_scheduler
@@ -14,9 +14,9 @@ from logger import Logger
 
 
 
-class DeepAntPred(nn.Module):
+class CNNAutoencoder(nn.Module):
     def __init__(self, opt):
-        super(DeepAntPred, self).__init__()
+        super(CNNAutoencoder, self).__init__()
         self.device = opt["device"]
 
         # Basic Network Params
@@ -24,7 +24,9 @@ class DeepAntPred(nn.Module):
         self.kernel_size = opt["kernel_size"]
         self.num_filters_1 = opt["num_filters_1"]
         self.num_filters_2 = opt["num_filters_2"]
+        self.num_filters_3 = opt["num_filters_3"]
         self.output_layer_size = opt["output_layer_size"]
+        self.padding = opt["padding"]
 
         self.conv_stride = opt["conv_stride"]
         self.pool_size_1 = opt["pool_size_1"]
@@ -40,14 +42,20 @@ class DeepAntPred(nn.Module):
         self.save_every = opt["save_every"]
 
         
-        self.conv_layer_1 = Conv1d(in_channels=1, out_channels=self.num_filters_1, kernel_size=self.kernel_size, stride=self.conv_stride)
-        self.pool_layer_1 = MaxPool1d(kernel_size=self.pool_size_1, stride=self.pool_strides_1)
+        # Encoder
+        self.conv_layer_1 = Conv1d(in_channels=1, out_channels=self.num_filters_1, kernel_size=self.kernel_size, stride=self.conv_stride, padding=self.padding)
+        # self.pool_layer_1 = MaxPool1d(kernel_size=self.pool_size_1, stride=self.pool_strides_1)
         self.lout_conv1 = int((self.length + 2*0- 1*(self.kernel_size-1)-1+self.conv_stride)/self.conv_stride)
+
         self.conv_layer_2 = Conv1d(in_channels=self.num_filters_2, out_channels=self.num_filters_2, kernel_size=self.kernel_size, stride=self.conv_stride)
-        self.pool_layer_2 = MaxPool1d(kernel_size=self.pool_size_2, stride=self.pool_strides_2)
+        # self.pool_layer_2 = MaxPool1d(kernel_size=self.pool_size_2, stride=self.pool_strides_2)
         self.lout_conv2 = int((self.lout_conv1 + 2*0- 1*(self.kernel_size-1)-1+self.conv_stride)/self.conv_stride)
-        self.flatten_layer = Flatten()
-        self.output_layer = Linear(in_features=self.num_filters_2*self.lout_conv2, out_features=self.output_layer_size)
+
+        self.conv_layer_3 = Conv1d(in_channels=self.num_filters_2, out_channels=self.num_filters_3, kernel_size=self.kernel_size, stride=self.conv_stride)
+        # self.pool_layer_3 = 
+
+        # self.deconv_layer_1 = ConvTranspose1d
+        # self.output_layer = Linear(in_features=self.num_filters_2*self.lout_conv2, out_features=self.output_layer_size)
     
         self.optimizer = torch.optim.Adam( filter(lambda p: p.requires_grad, self.parameters()), self.lr)
 
